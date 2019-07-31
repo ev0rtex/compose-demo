@@ -1,0 +1,32 @@
+version: '3'
+services:
+  whoami:
+    image: containous/whoami # A container that exposes an API to show its IP address
+    networks:
+      - backend
+    labels:
+      - "traefik.frontend.rule=PathPrefixStrip:/whoami"
+      - "traefik.port=80"
+
+  redis:
+    image: redis
+    networks:
+      - backend
+
+  reverse-proxy:
+    image: traefik
+    command: --api --docker --logLevel="DEBUG" --accesslog # Enables the web UI and tells Traefik to listen to docker
+    networks:
+      - frontend
+      - backend
+    ports:
+      - "80:80"     # The HTTP port
+      - "8080:8080" # The Web UI (enabled by --api)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
